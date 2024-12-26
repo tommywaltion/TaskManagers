@@ -1,0 +1,202 @@
+{% extends 'Task/base.html' %}
+
+{% load static %}
+
+{% block title %}
+Dashboard
+{% endblock %}
+
+{% block imports %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div>
+    <header class="app-name">
+        <h3>Task Manager</h3>
+        <form action="{% url 'logout' %}" method="post" style="display: flex;">
+            <h3>Welcome, <a href="{% url 'view_profile' %}">{{ user.profile.custom_username|default:user.username }}</a></h3>
+            <button type="submit" class="logout-btn">Logout</button>
+        </form>
+    </header>
+    <div class="tasklist-create-action-container">
+        <input type="text" name="" id="new-tasklist-name" placeholder="Enter new Task List name">
+        <button id="add-tasklist-btn">Add New Task</button>
+    </div>
+    <div id="taskList-table-container">
+        {% for tasklist, tasks in group_task.items %}
+            <div class="task-list" data-task-list-id="{{ tasklist.id }}">
+                <div class="tasklist-tablename">
+                    <h2>{{tasklist.name}}</h2>
+                    <div class="tasklist-action">
+                        <button class="" onclick="openEditModal('{{ tasklist.id }}', '{{ tasklist.name }}')">
+                            <i class="fa fa-pen"></i>
+                        </button>
+                        <a href="{% url 'create_task'  %}?tasklist_id={{ tasklist.id }}" id="add-task">
+                            <i class="fa fa-plus"></i>
+                        </a>
+                        <button class="delete-task-list-btn" data-task-list-id="{{ tasklist.id }}">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="filter-sort-controls">
+                    <label for="" class="filter-priority-label">Filter by Priority:</label>
+                    <select id="filter-priority" class="filter-priority">
+                        <option value="0">All</option>
+                        <option value="1">Low</option>
+                        <option value="2">Medium</option>
+                        <option value="3">High</option>
+                        <option value="4">Critical</option>
+                    </select>
+                    <label for="" class="sort-tasks-label">Sort by:</label>
+                    <select id="sort-tasks" class="sort-tasks">
+                        <option value="deadline_asc" selected>Deadline (Ascending)</option>
+                        <option value="deadline_desc">Deadline (Descending)</option>
+                        <option value="priority">Priority</option>
+                    </select>
+                </div>
+                <table class="task-table">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Task Name</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>View</th>
+                            <th>Edit</th>
+                            <th>Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for Task in tasks %}
+                        <tr data-priority-value="{{ Task.priority }}" data-deadline="{{ Task.deadline|date:'Y-m-d' }}" data-task-id="{{ Task.id }}" class="{% if Task.priority == 1 %}low-priority{% elif Task.priority == 2 %}medium-priority{% elif Task.priority == 3 %}high-priority{% elif Task.priority == 4 %}critical-priority{% endif %}">
+                            <td>
+                                <div class="status-box {% if Task.status == 'To Do' %}todo-box{% elif Task.status == 'In Progress' %}progress-box{% elif Task.status == 'Completed' %}complete-box{% endif %}"
+                                data-task-status="{{ Task.status }}">
+                                </div>
+                            </td>
+                            <td>{{ Task.title }}</td>
+                            <td>{{ Task.deadline|date:"l, d / M / Y" }}</td>
+                            <td>
+                                <select class="task-status" data-task-id="{{ Task.id }}">
+                                    <option value="To Do" {% if Task.status == 'To Do' %}selected{% endif %}>To Do</option>
+                                    <option value="In Progress" {% if Task.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="Completed" {% if Task.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                </select>
+                            </td>
+                            <td>
+                                <span class="priority-icon" data-priority="{{ Task.priority }}">
+                                    {% if Task.priority == 1 %}
+                                    <i class="fas fa-circle text-success" title="Low Priority"></i>
+                                    {% elif Task.priority == 2 %}
+                                    <i class="fas fa-circle text-warning" title="Medium Priority"></i>
+                                    {% elif Task.priority == 3 %}
+                                    <i class="fas fa-exclamation-circle text-danger" title="High Priority"></i>
+                                    {% elif Task.priority == 4 %}
+                                    <i class="fas fa-exclamation-triangle text-danger" title="Critical Priority"></i>
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="icon-btn detail-btn" title="View Details" onclick="fetchTaskDetails('{{ Task.id }}')">
+                                    <i class="fa fa-eye"></i>
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'edit_task' Task.id %}" title="Edit Task">
+                                    <i class="fa fa-pen icon-btn"></i>
+                                </a>
+                            </td>
+                            <td>
+                               <span class="icon-btn delete-btn" data-task-title="{{ Task.title }}" data-task-id="{{ Task.id }}" title="Delete task" onclick="">
+                                <i class="fa fa-trash"></i>
+                               </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="3">
+                                    No item in this list
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% empty %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Detail Popup -->
+<div id="taskModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2 id="taskTitle"></h2>
+        <p><strong>Status:</strong> <span id="taskStatus" class="highlight"></span></p>
+        <p><strong>Deadline:</strong> <span id="taskDueDate"></span> (<span id="taskDaysLeft"></span>)</p>
+        <p><strong>Description:</strong><br><span id="taskDescription"></span></p>
+    </div>
+</div>
+
+<!-- Delete Popup -->
+<div id="popup-task-delete" class="popup-task-delete hidden">
+    <div class="popup-task-content">
+        <p>Are you sure you want to delete:</p>
+        <p><strong class="taskName">Default Option</strong></p>
+        <form action="" method="post">
+            <button id="confirm-delete-btn" type="button">Yes, Delete</button>
+            <button id="cancel-delete-btn" type="button">Cancel</button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Tasklist Name -->
+<div id="editTaskListModal" class="modal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h2 class="modal-title">Edit Tasklist</h2>
+            <button type="button" class="close" onclick="closeEditModal()">&times;</button>
+        </div>
+        <form method="post" id="editTaskListForm">
+            {% csrf_token %}
+            <div>
+                <input type="hidden" id="taskListId" name="taskListId">
+                <label for="taskListName" class="form-label">TaskList Name:</label>
+                <textarea name="taskListName" id="taskListName" rows="4" class="form-control" placeholder="Enter New Name"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" onclick="saveTaskList()" class="btn btn-primary">Save</button>
+                <button type="button" onclick="closeEditModal()" class="btn btn-secondary">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="overlay"></div>
+
+{% endblock %}
+{% block script %}
+<script>
+
+    const overlay = document.getElementById('overlay');
+
+    let popup = document.getElementById('popup-task-delete');
+    let confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+    let cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+    let taskTitleElement = document.querySelector('.taskName');
+
+    const csrf_token = "{{ csrf_token }}";
+
+</script>
+<script src="{% static 'javascript/dashboard/addTaskList.js' %}"></script>
+<script src="{% static 'javascript/dashboard/deleteTaskListPopup.js' %}"></script>
+<script src="{% static 'javascript/dashboard/deleteTaskPopup.js' %}"></script>
+<script src="{% static 'javascript/dashboard/taskDetails.js' %}"></script>
+<script src="{% static 'javascript/dashboard/statusDropdownUpdate.js' %}"></script>
+<script src="{% static 'javascript/dashboard/editTaskList.js' %}"></script>
+<script src="{% static 'javascript/dashboard/sortBy.js' %}"></script>
+<script src="{% static 'javascript/dashboard/filterPriority.js' %}"></script>
+{% endblock %}

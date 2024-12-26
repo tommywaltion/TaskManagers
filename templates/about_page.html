@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}
+Landing
+{% endblock %}
+
+{% block imports %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="{% static 'About.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="about-container">
+    <h1>About TaskManagers</h1>
+    <p>
+        Selamat datang di <strong>TaskManagers</strong>! Web applikasi ini dibuat untuk membantu anda tetap teratur
+        dan untuk mengelola tugas harian anda secara effisien. Maupun anda mengerjakan banyak hal seperti tugas kantor, tugas sekolah,
+        ataupun proyek kolaboratif, TaskManagers menyediakan alat yang anda butuhkan untuk memprerioritaskan dan melacak kemajuan anda.
+    </p>
+    <p>
+        Dengan fitur-fitur seperti daftar tugas, otentikasi pengguna, dan profil yang dapat disesuaikan, TaskManagers menyederhanakan 
+        cara Anda menangani tugas. Tujuan kami adalah menciptakan pengalaman yang lancar dan intuitif bagi pengguna yang menginginkan 
+        untuk mengendalikan waktu dan produktivitas mereka.
+    </p>
+    <div class="credits">
+        <p>Developed With Love By <strong>Raihan Desfitra</strong></p>
+    </div>
+    <div class="btn-container">
+        <a href="{% url 'landing' %}" class="btn">Back</a>
+    </div>
+</div>
+{% endblock %}

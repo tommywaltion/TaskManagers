@@ -1,0 +1,24 @@
+{% extends 'Task/base.html' %}
+
+{% load static %}
+
+{% block title %}
+Edit
+{% endblock %}
+
+{% block imports %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="{% static 'edit_task.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2 class="form-title">Edit Task</h2>
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Update Task</button>
+        <a href="{% url 'task_list' %}" class="btn btn-cancel">Cancel</a>
+    </form>
+</div>
+{% endblock %}
